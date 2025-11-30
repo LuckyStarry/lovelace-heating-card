@@ -1,0 +1,7 @@
+{
+  "name": "地暖控制器自定义卡片",
+  "render_readme": true,
+  "filename": "heating-card.js",
+  "domains": ["lovelace"],
+  "homeassistant": "2023.1.0"
+}

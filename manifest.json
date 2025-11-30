@@ -1,0 +1,10 @@
+{
+  "domain": "heating_card",
+  "name": "Heating Card",
+  "documentation": "https://github.com/LuckyStarry/lovelace-heating-card",
+  "issue_tracker": "https://github.com/LuckyStarry/lovelace-heating-card/issues",
+  "codeowners": ["@LuckyStarry"],
+  "version": "1.0.0",
+  "dependencies": [],
+  "requirements": []
+}

@@ -1,0 +1,673 @@
+---
+description: Home Assistant Lovelace 自定义卡片开发规则
+globs:
+  - "**/*.js"
+  - "**/*.md"
+  - "**/*.yaml"
+  - "**/*.json"
+alwaysApply: true
+---
+
+# Home Assistant Lovelace 自定义卡片开发规则
+
+## 项目概述
+
+这是一个 Home Assistant Lovelace 自定义卡片项目，通过 HACS 安装使用。项目采用**原生 Web Components**技术，不依赖外部框架，确保最大兼容性。
+
+## 技术栈
+
+- **框架**: 原生 Web Components (HTMLElement)
+- **平台**: Home Assistant Lovelace
+- **包管理**: HACS (Home Assistant Community Store)
+- **语言**: JavaScript (ES6+)
+- **样式**: 原生 CSS (通过 `<style>` 标签)
+
+## 项目结构规范
+
+单卡片项目应遵循以下结构：
+
+```
+[card-name]/
+├── [card-name].js          # 主卡片文件（必需）
+├── README.md               # 卡片说明文档（必需）
+├── hacs.json               # HACS 配置文件（必需）
+├── manifest.json           # 清单文件（推荐）
+├── example-usage.yaml      # 使用示例（推荐）
+├── LICENSE                 # 许可证（推荐）
+└── docs/                   # 文档图片（可选）
+    ├── card-preview.png
+    ├── card-features.png
+    ├── ui-editor.png
+    └── card-layout.png
+```
+
+## 代码规范
+
+### 1. 卡片类结构
+
+```javascript
+class MyCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._hass = null;
+    this._config = null;
+    this._entity = null;
+    this._initialRender = false;
+  }
+
+  static getConfigElement() {
+    return document.createElement("my-card-editor");
+  }
+
+  static getStubConfig(hass, entities) {
+    return {
+      entity: entities[0] || "",
+      name: "卡片名称",
+    };
+  }
+
+  setConfig(config) {
+    if (!config.entity) {
+      throw new Error("请指定实体 (entity)");
+    }
+    this._config = config;
+    if (this._initialRender) {
+      this._updateEntities();
+      this._render();
+    }
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this._initialRender) {
+      this._updateEntities();
+      this._render();
+    }
+  }
+
+  get hass() {
+    return this._hass;
+  }
+
+  connectedCallback() {
+    this._initialRender = true;
+    if (this._config && this._hass) {
+      this._updateEntities();
+      this._render();
+    }
+  }
+
+  _updateEntities() {
+    if (!this._hass || !this._config) return;
+    this._entity = this._hass.states[this._config.entity];
+  }
+
+  _render() {
+    if (!this.shadowRoot) return;
+    // 渲染逻辑
+  }
+
+  getCardSize() {
+    return 3; // 返回卡片高度（单位：行）
+  }
+}
+
+customElements.define("my-card", MyCard);
+```
+
+### 2. 配置编辑器结构
+
+```javascript
+class MyCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._hass = null;
+    this._hasRendered = false;
+  }
+
+  async connectedCallback() {
+    // 确保 Home Assistant 组件已加载
+    try {
+      if (window.loadCardHelpers) {
+        const helpers = await window.loadCardHelpers();
+        if (helpers && helpers.loadHaComponents) {
+          await helpers.loadHaComponents();
+        }
+      }
+    } catch (e) {
+      // 继续执行，不阻塞渲染
+    }
+
+    if (this._config && this._hass) {
+      this._render();
+    }
+  }
+
+  setConfig(config) {
+    this._config = config || {};
+    if (this.isConnected && !this._hasRendered) {
+      this._render();
+    } else if (this._hasRendered) {
+      this._updateValues();
+    }
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (this.isConnected && this._hasRendered) {
+      this._updateValues();
+    } else if (this.isConnected && this._config) {
+      this._render();
+    }
+  }
+
+  get hass() {
+    return this._hass;
+  }
+
+  async _render() {
+    // 使用 ha-form 组件（推荐）或直接创建表单元素
+    // 不使用 shadow DOM，直接操作 Light DOM
+    this.innerHTML = "";
+    // 创建和添加元素
+    this._hasRendered = true;
+  }
+
+  _updateValues() {
+    // 更新已渲染元素的值
+  }
+
+  _fireConfigChanged() {
+    const event = new CustomEvent("config-changed", {
+      detail: { config: this._config },
+      bubbles: true,
+      composed: true,
+    });
+    this.dispatchEvent(event);
+  }
+}
+
+// 先注册配置编辑器
+customElements.define("my-card-editor", MyCardEditor);
+```
+
+### 3. 命名规范
+
+- **卡片类名**: PascalCase（如 `AirConditionerCard`）
+- **编辑器类名**: PascalCase + Editor（如 `AirConditionerCardEditor`）
+- **自定义元素名**: kebab-case（如 `air-conditioner-card`）
+- **文件名**: kebab-case（如 `air-conditioner-card.js`）
+- **变量/函数**: camelCase（如 `getModeColor`）
+- **私有变量**: 下划线前缀（如 `_config`, `_hass`, `_entity`）
+- **常量**: UPPER_SNAKE_CASE（如 `DEFAULT_TEMP`）
+
+### 4. 必需方法
+
+#### 主卡片类
+
+- `constructor()`: 初始化，创建 Shadow DOM
+- `static getConfigElement()`: 返回配置编辑器元素
+- `static getStubConfig(hass, entities)`: 返回默认配置
+- `setConfig(config)`: 验证并设置配置
+- `set hass(hass)`: 设置 Home Assistant 对象
+- `connectedCallback()`: 元素连接到 DOM 时调用
+- `_render()`: 渲染卡片内容
+- `getCardSize()`: 返回卡片大小（用于布局计算）
+
+#### 配置编辑器类
+
+- `constructor()`: 初始化配置和状态
+- `setConfig(config)`: 设置配置
+- `set hass(hass)`: 设置 Home Assistant 对象
+- `connectedCallback()`: 元素连接到 DOM 时调用，加载组件
+- `_render()`: 渲染编辑器界面
+- `_updateValues()`: 更新已渲染元素的值
+- `_fireConfigChanged()`: 触发配置变更事件
+
+### 5. 配置验证
+
+```javascript
+setConfig(config) {
+  if (!config.entity) {
+    throw new Error("请指定实体 (entity)");
+  }
+  this._config = config;
+  if (this._initialRender) {
+    this._updateEntities();
+    this._render();
+  }
+}
+```
+
+### 6. 实体访问
+
+```javascript
+_updateEntities() {
+  if (!this._hass || !this._config) return;
+  this._entity = this._hass.states[this._config.entity];
+}
+
+_render() {
+  if (!this.shadowRoot) return;
+
+  if (!this._entity) {
+    const haCard = document.createElement("ha-card");
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "error";
+    errorDiv.textContent = `实体未找到: ${this._config?.entity || "未知"}`;
+    haCard.appendChild(errorDiv);
+    this.shadowRoot.appendChild(haCard);
+    return;
+  }
+  // 正常渲染
+}
+```
+
+### 7. 服务调用
+
+```javascript
+_callService(domain, service, serviceData) {
+  if (this._hass && this._hass.callService) {
+    this._hass.callService(domain, service, serviceData);
+  }
+}
+
+// 使用示例
+_handleToggle() {
+  this._callService("climate", "toggle", {
+    entity_id: this._config.entity,
+  });
+}
+```
+
+### 8. 样式规范
+
+- 使用原生 CSS（通过 `<style>` 标签）
+- 支持 CSS 变量（用于主题适配）
+- 使用响应式设计
+- 遵循 Material Design 原则
+- 使用 `!important` 确保样式优先级（必要时）
+
+```javascript
+_createStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .card {
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--ha-card-background, var(--card-background-color, #fff));
+    }
+
+    .button {
+      --mdc-theme-primary: var(--primary-color);
+      cursor: pointer !important;
+    }
+  `;
+  this.shadowRoot.appendChild(style);
+}
+```
+
+### 9. HTML 模板规范
+
+- 使用原生 DOM API 创建元素
+- 使用 `ha-card` 作为根容器
+- 使用 Home Assistant 内置组件（`ha-icon`, `ha-switch` 等）
+- 使用 Material Web Components（`mwc-button` 等）
+
+```javascript
+_render() {
+  if (!this.shadowRoot) return;
+
+  const haCard = document.createElement("ha-card");
+  const cardContent = document.createElement("div");
+  cardContent.className = "card-content";
+
+  const icon = document.createElement("ha-icon");
+  icon.setAttribute("icon", "mdi:fan");
+
+  const title = document.createElement("div");
+  title.className = "title";
+  title.textContent = this._config.name || "空调";
+
+  cardContent.appendChild(icon);
+  cardContent.appendChild(title);
+  haCard.appendChild(cardContent);
+  this.shadowRoot.appendChild(haCard);
+}
+```
+
+### 10. 配置编辑器规范
+
+#### 使用 ha-form 组件（推荐）
+
+```javascript
+_render() {
+  const entityForm = document.createElement("ha-form");
+
+  const schema = [
+    {
+      name: "entity",
+      required: true,
+      selector: {
+        entity: {
+          domain: ["climate"]
+        }
+      }
+    }
+  ];
+
+  entityForm.hass = this._hass;
+  entityForm.data = {
+    entity: (this._config && this._config.entity) || ""
+  };
+  entityForm.schema = schema;
+  entityForm.computeLabel = (schema) => {
+    if (schema.name === "entity") {
+      return "实体 *";
+    }
+    return schema.name;
+  };
+
+  entityForm.addEventListener("value-changed", (ev) => {
+    if (ev.detail.value && ev.detail.value.entity) {
+      this._config.entity = ev.detail.value.entity;
+      this._fireConfigChanged();
+    }
+  });
+
+  // 不使用 shadow DOM，直接添加到 Light DOM
+  this.appendChild(entityForm);
+}
+```
+
+#### 编辑器注意事项
+
+- **不使用 Shadow DOM**：配置编辑器应直接操作 Light DOM，以便 `ha-form` 等组件能正确访问上下文
+- **加载组件**：在 `connectedCallback` 中调用 `loadHaComponents()` 确保组件已加载
+- **更新值**：在 `setConfig` 和 `set hass` 中调用 `_updateValues()` 更新已渲染元素的值
+
+## HACS 配置规范
+
+### hacs.json 格式
+
+```json
+{
+  "name": "卡片显示名称",
+  "render_readme": true,
+  "filename": "卡片文件名.js",
+  "domains": ["lovelace"],
+  "homeassistant": "2023.1.0"
+}
+```
+
+### 要求
+
+- `name`: 卡片在 HACS 中显示的名称
+- `filename`: 必须与主卡片文件名一致
+- `homeassistant`: 最低要求的 Home Assistant 版本
+- `render_readme`: 建议设为 `true`，让 HACS 渲染 README
+
+### manifest.json 格式（可选）
+
+```json
+{
+  "domain": "card_domain",
+  "name": "Card Name",
+  "documentation": "https://github.com/username/repo",
+  "issue_tracker": "https://github.com/username/repo/issues",
+  "codeowners": ["@username"],
+  "version": "1.0.0",
+  "dependencies": [],
+  "requirements": []
+}
+```
+
+## 文档规范
+
+### README.md 必须包含
+
+1. **功能特性列表**
+2. **安装方法**（HACS 和手动安装）
+3. **使用方法**（UI 配置和 YAML 配置）
+4. **配置选项表格**
+5. **依赖项说明**
+6. **界面说明**（可选，带标注图）
+7. **故障排除**
+
+### 图片建议
+
+在 `docs/` 文件夹中准备以下图片：
+
+- `card-preview.png` - 卡片预览图
+- `card-features.png` - 功能演示图
+- `ui-editor.png` - UI 配置界面图
+- `card-layout.png` - 界面说明图
+
+## 最佳实践
+
+### 1. 错误处理
+
+```javascript
+_render() {
+  if (!this.shadowRoot) return;
+
+  if (!this._entity) {
+    const haCard = document.createElement("ha-card");
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "error";
+    errorDiv.textContent = `实体未找到: ${this._config?.entity || "未知"}`;
+    haCard.appendChild(errorDiv);
+    this.shadowRoot.appendChild(haCard);
+    return;
+  }
+  // 正常渲染
+}
+```
+
+### 2. 状态管理
+
+```javascript
+set hass(hass) {
+  this._hass = hass;
+  if (this._initialRender) {
+    this._updateEntities();
+    this._render();
+  }
+}
+
+_updateEntities() {
+  if (!this._hass || !this._config) return;
+  this._entity = this._hass.states[this._config.entity];
+}
+```
+
+### 3. 条件渲染
+
+```javascript
+// 使用条件判断
+if (this._entity && this._entity.state === "on") {
+  const activeDiv = document.createElement("div");
+  activeDiv.textContent = "运行中";
+  cardContent.appendChild(activeDiv);
+}
+```
+
+### 4. 事件处理
+
+```javascript
+// 使用 addEventListener
+button.addEventListener("click", () => {
+  this._handleClick();
+});
+
+// 传递参数
+button.addEventListener("click", () => {
+  this._handleModeChange("制热");
+});
+```
+
+### 5. 样式变量
+
+使用 CSS 变量支持主题：
+
+```css
+color: var(
+  --ha-text-primary-color,
+  var(--primary-text-color, rgba(0, 0, 0, 0.87))
+);
+background: var(--ha-card-background, var(--card-background-color, #fff));
+border-color: var(
+  --ha-divider-color,
+  var(--divider-color, rgba(0, 0, 0, 0.12))
+);
+```
+
+### 6. Shadow DOM 使用
+
+- **主卡片**：使用 Shadow DOM（`attachShadow({ mode: "open" })`）
+- **配置编辑器**：不使用 Shadow DOM，直接操作 Light DOM（以便 `ha-form` 等组件访问上下文）
+
+### 7. 组件注册顺序
+
+```javascript
+// 先注册配置编辑器
+if (!customElements.get("my-card-editor")) {
+  customElements.define("my-card-editor", MyCardEditor);
+}
+
+// 再注册主卡片
+if (!customElements.get("my-card")) {
+  customElements.define("my-card", MyCard);
+
+  // 注册到 window.customCards（可选，但有助于 HACS 识别）
+  window.customCards = window.customCards || [];
+  window.customCards.push({
+    type: "my-card",
+    name: "My Card",
+    description: "卡片描述",
+  });
+}
+```
+
+## 依赖管理
+
+### Home Assistant 内置（无需安装）
+
+- `mwc-button` - Material Web Components（Home Assistant 已内置）
+- `ha-card`, `ha-icon`, `ha-switch`, `ha-form` - Home Assistant 核心组件
+- `ha-textfield`, `ha-entity-picker` - Home Assistant UI 组件
+
+### 外部依赖
+
+**无。此项目不使用任何外部依赖！**
+
+- 不使用 Lit Element
+- 不使用任何外部 JavaScript 库
+- 完全依赖 Home Assistant 内置组件
+
+## 版本管理
+
+- 使用语义化版本（Semantic Versioning）
+- 格式：`MAJOR.MINOR.PATCH`（如 `1.0.0`）
+- Git 标签格式：`v[version]`（如 `v1.0.0`）
+
+## 测试要求
+
+- 在不同浏览器中测试（Chrome, Firefox, Safari, Edge）
+- 测试不同主题（亮色/暗色）
+- 测试响应式布局
+- 验证所有功能正常工作
+- 测试 UI 配置编辑器（新建和编辑现有配置）
+
+## 代码质量
+
+- 保持代码简洁易读
+- 添加必要的注释
+- 遵循单一职责原则
+- 使用有意义的变量和函数名
+- 适当使用 `console.log` 进行调试（生产环境可移除）
+
+## 常见模式
+
+### 模式切换按钮
+
+```javascript
+const modes = ["制热", "制冷", "除湿", "送风"];
+modes.forEach((mode) => {
+  const modeBtn = document.createElement("mwc-button");
+  modeBtn.className = `mode-chip ${currentMode === mode ? "active" : ""}`;
+  modeBtn.style.cursor = "pointer";
+  modeBtn.addEventListener("click", () => {
+    this._handleModeChange(mode);
+  });
+
+  const icon = document.createElement("ha-icon");
+  icon.setAttribute("icon", this._getModeIcon(mode));
+  modeBtn.appendChild(icon);
+
+  const text = document.createElement("span");
+  text.textContent = mode;
+  modeBtn.appendChild(text);
+
+  container.appendChild(modeBtn);
+});
+```
+
+### 实体状态显示
+
+```javascript
+_getStateText() {
+  if (!this._entity) return "未知";
+  return `${this._entity.state} - ${Math.round(this._entity.attributes.temperature || 0)}℃`;
+}
+```
+
+### 动态样式
+
+```javascript
+_getCardClass() {
+  const isOff = this._entity?.state === "off";
+  const mode = this._entity?.attributes.preset_mode || "";
+  return `air-conditioner-card ${isOff ? "off" : mode}`;
+}
+
+// 在渲染时使用
+haCard.className = this._getCardClass();
+```
+
+### CSS 变量使用
+
+```css
+/* 使用 Home Assistant 标准 CSS 变量 */
+color: var(
+  --ha-text-primary-color,
+  var(--primary-text-color, rgba(0, 0, 0, 0.87))
+);
+background: var(--ha-card-background, var(--card-background-color, #ffffff));
+border-color: var(
+  --ha-divider-color,
+  var(--divider-color, rgba(0, 0, 0, 0.12))
+);
+box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+```
+
+## 注意事项
+
+1. **不使用 Lit Element 或其他外部框架**：使用原生 Web Components 确保最大兼容性
+2. **直接操作 DOM**：使用原生 DOM API（`createElement`, `appendChild` 等）
+3. **确保卡片在实体不存在时也能正常显示**：显示错误信息而不是崩溃
+4. **支持暗色主题**：使用 CSS 变量适配主题
+5. **保持向后兼容性**：新增功能时考虑旧配置
+6. **文档要完整清晰**：包含安装、使用、配置、故障排除等
+7. **配置编辑器不使用 Shadow DOM**：确保 `ha-form` 等组件能正确访问上下文
+8. **在 `connectedCallback` 中加载组件**：使用 `loadHaComponents()` 确保组件已加载
+
+## 参考资源
+
+- [Web Components 文档](https://developer.mozilla.org/en-US/docs/Web/Web_Components)
+- [Home Assistant 开发文档](https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/)
+- [HACS 文档](https://hacs.xyz/docs/)
+- [Material Design](https://material.io/design)
+- [Material Design Icons](https://materialdesignicons.com/)

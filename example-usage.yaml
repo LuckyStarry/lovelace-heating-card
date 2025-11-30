@@ -1,0 +1,35 @@
+# 基本用法
+type: custom:heating-card
+entity: climate.bedroom_heating
+
+# 带自定义名称
+type: custom:heating-card
+entity: climate.bedroom_heating
+name: 主卧地暖
+
+# 在网格布局中使用
+type: grid
+cards:
+  - type: custom:heating-card
+    entity: climate.bedroom_heating
+    name: 主卧地暖
+    grid_options:
+      columns: 6
+      rows: auto
+  - type: custom:heating-card
+    entity: climate.living_room_heating
+    name: 客厅地暖
+    grid_options:
+      columns: 6
+      rows: auto
+
+# 在垂直堆叠中使用
+type: vertical-stack
+cards:
+  - type: custom:heating-card
+    entity: climate.bedroom_heating
+    name: 主卧地暖
+  - type: custom:heating-card
+    entity: climate.living_room_heating
+    name: 客厅地暖
+

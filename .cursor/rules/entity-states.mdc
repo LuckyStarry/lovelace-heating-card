@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+地暖控制器实体状态如下：
+
+hvac_modes: auto, off
+min_temp: 5
+max_temp: 35
+target_temp_step: 1
+preset_modes: 离家, 在家, 睡眠, 节能, 手动
+current_temperature: 20
+temperature: 20
+preset_mode: 手动
+icon: mdi:thermostat
+friendly_name: 南卧地暖温控器
+supported_features: 401
