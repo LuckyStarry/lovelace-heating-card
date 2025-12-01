@@ -152,64 +152,60 @@ class HeatingCard extends HTMLElement {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-bottom: 32px;
-        padding: 24px 0;
-        gap: 32px;
+        margin-bottom: 20px;
+        padding: 16px 0;
+        gap: 40px;
       }
 
       .temp-display {
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-width: 120px;
+        min-width: 140px;
       }
 
       .temp-label {
-        font-size: 13px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
-        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
+        margin-bottom: 8px;
         font-weight: 400;
-        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
       }
 
       .temp-value-container {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
       }
 
       .thermometer-icon {
-        --mdc-icon-size: 32px;
-        color: var(--primary-color);
-        opacity: 0.8;
+        --mdc-icon-size: 40px;
+        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
+        opacity: 1;
+        margin-right: 4px;
       }
 
       .temp-value {
-        font-size: 56px;
+        font-size: 48px;
         font-weight: 300;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
         line-height: 1;
-        letter-spacing: -2px;
+        letter-spacing: -1px;
       }
 
       .temp-unit {
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 300;
-        margin-left: 2px;
-        opacity: 0.8;
-      }
-
-      .temp-divider {
-        width: 1px;
-        height: 80px;
-        background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.08)));
-        flex-shrink: 0;
+        margin-left: 0;
+        opacity: 1;
+        vertical-align: top;
       }
 
       .target-temp-control-container {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
       }
 
       .temp-mini-button {
@@ -217,30 +213,30 @@ class HeatingCard extends HTMLElement {
         --mdc-theme-on-primary: white;
         cursor: pointer !important;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
         padding: 0;
         background: var(--primary-color);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
       }
 
       .temp-mini-button:hover {
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
-        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transform: scale(1.08);
       }
 
       .temp-mini-button:active {
-        transform: scale(0.95);
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        transform: scale(0.92);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       }
 
       .temp-mini-button ha-icon {
-        --mdc-icon-size: 20px;
+        --mdc-icon-size: 18px;
         color: white;
       }
 
@@ -397,10 +393,6 @@ class HeatingCard extends HTMLElement {
     currentTemp.appendChild(currentLabel);
     currentTemp.appendChild(currentValueContainer);
 
-    // 分隔线
-    const divider = document.createElement("div");
-    divider.className = "temp-divider";
-
     // 目标温度（右侧，带内嵌控制按钮）
     const targetTemp = document.createElement("div");
     targetTemp.className = "temp-display";
@@ -447,7 +439,6 @@ class HeatingCard extends HTMLElement {
     targetTemp.appendChild(targetControlContainer);
 
     section.appendChild(currentTemp);
-    section.appendChild(divider);
     section.appendChild(targetTemp);
 
     return section;
