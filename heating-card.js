@@ -227,34 +227,43 @@ class HeatingCard extends HTMLElement {
 
       .temp-mini-button {
         --mdc-theme-primary: var(--primary-color);
-        --mdc-theme-on-primary: white;
         cursor: pointer !important;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
+        border-radius: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        width: 40px;
+        height: 40px;
         padding: 0;
-        background: var(--primary-color);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.9))) !important;
+        border: 1px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12))) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
-      .temp-mini-button:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        transform: scale(1.08);
+      .temp-mini-button:hover:not(:disabled) {
+        background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 1))) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
       }
 
-      .temp-mini-button:active {
-        transform: scale(0.92);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      .temp-mini-button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
       }
 
       .temp-mini-button ha-icon {
-        --mdc-icon-size: 18px;
-        color: white;
+        --mdc-icon-size: 24px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.7))) !important;
+        width: 24px;
+        height: 24px;
+        margin: 0;
+      }
+
+      .temp-mini-button:hover:not(:disabled) ha-icon {
+        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87))) !important;
       }
 
       .preset-section {
@@ -333,7 +342,6 @@ class HeatingCard extends HTMLElement {
       .heating-card.off .temp-mini-button {
         opacity: 0.4;
         pointer-events: none;
-        background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12)));
       }
 
       .heating-card.off .temp-mini-button ha-icon {
