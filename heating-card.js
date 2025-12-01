@@ -520,7 +520,7 @@ class HeatingCard extends HTMLElement {
 
   _getPresetIcon(preset) {
     const iconMap = {
-      离家: "mdi:home-export",
+      离家: "mdi:exit-run",
       在家: "mdi:home",
       睡眠: "mdi:sleep",
       节能: "mdi:leaf",
