@@ -152,45 +152,49 @@ class HeatingCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
         padding: 12px 0;
+        margin-bottom: 20px;
       }
 
-      .temp-display {
+      .current-temp {
         display: flex;
         flex-direction: column;
+        align-items: flex-start;
         gap: 4px;
       }
 
-      .temp-display.current-temp {
-        align-items: flex-start;
-      }
-
-      .temp-display.target-temp {
-        align-items: flex-end;
-      }
-
-      .temp-label {
-        font-size: 12px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
-        margin-bottom: 8px;
-        font-weight: 400;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-      }
-
-      .temp-value-container {
+      .current-temp-wrapper {
         display: flex;
         align-items: center;
         gap: 12px;
       }
 
-      .thermometer-icon {
-        --mdc-icon-size: 40px;
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        opacity: 1;
+      .temp-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+
+      .target-temp-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .temp-label {
+        font-size: 12px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        line-height: 1;
+      }
+
+      .temp-icon {
         width: 40px;
         height: 40px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
       }
 
       .temp-value {
@@ -225,50 +229,40 @@ class HeatingCard extends HTMLElement {
         vertical-align: super;
       }
 
-      .target-temp-control-container {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .temp-mini-button {
-        --mdc-theme-primary: var(--primary-color);
-        cursor: pointer !important;
-        border-radius: 8px;
+      .temp-btn {
         min-width: 40px;
         min-height: 40px;
-        width: 40px;
-        height: 40px;
-        padding: 0;
+        --mdc-theme-primary: var(--primary-color, rgba(0, 0, 0, 0.6));
         background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.9))) !important;
         border: 1px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12))) !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
+        border-radius: 8px;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+        cursor: pointer !important;
       }
 
-      .temp-mini-button:hover:not(:disabled) {
+      .temp-btn:hover:not(:disabled) {
         background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 1))) !important;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
       }
 
-      .temp-mini-button:disabled {
+      .temp-btn:disabled {
         opacity: 0.4;
         cursor: not-allowed;
       }
 
-      .temp-mini-button ha-icon {
-        --mdc-icon-size: 24px;
+      .temp-btn ha-icon {
         color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.7))) !important;
         width: 24px;
         height: 24px;
         margin: 0;
       }
 
-      .temp-mini-button:hover:not(:disabled) ha-icon {
+      .temp-btn:hover:not(:disabled) ha-icon {
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87))) !important;
       }
 
@@ -335,7 +329,7 @@ class HeatingCard extends HTMLElement {
       }
 
       .heating-card.off .temp-value,
-      .heating-card.off .thermometer-icon {
+      .heating-card.off .temp-icon {
         opacity: 0.4;
       }
 
@@ -345,12 +339,12 @@ class HeatingCard extends HTMLElement {
         filter: grayscale(0.5);
       }
 
-      .heating-card.off .temp-mini-button {
+      .heating-card.off .temp-btn {
         opacity: 0.4;
         pointer-events: none;
       }
 
-      .heating-card.off .temp-mini-button ha-icon {
+      .heating-card.off .temp-btn ha-icon {
         color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
       }
 
@@ -399,45 +393,45 @@ class HeatingCard extends HTMLElement {
 
     // 当前温度（左侧）
     const currentTemp = document.createElement("div");
-    currentTemp.className = "temp-display current-temp";
+    currentTemp.className = "current-temp";
 
     const currentLabel = document.createElement("div");
     currentLabel.className = "temp-label";
     currentLabel.textContent = "当前温度";
 
-    const currentValueContainer = document.createElement("div");
-    currentValueContainer.className = "temp-value-container";
+    const currentTempWrapper = document.createElement("div");
+    currentTempWrapper.className = "current-temp-wrapper";
 
-    const thermometerIcon = document.createElement("ha-icon");
-    thermometerIcon.setAttribute("icon", "mdi:thermometer");
-    thermometerIcon.className = "thermometer-icon";
+    const tempIcon = document.createElement("ha-icon");
+    tempIcon.setAttribute("icon", "mdi:thermometer");
+    tempIcon.className = "temp-icon";
 
-    const currentValue = document.createElement("div");
+    const currentValue = document.createElement("span");
     currentValue.className = "temp-value";
     const currentTempNum = Math.round(
       this._entity?.attributes.current_temperature || 0
     );
     currentValue.innerHTML = `${currentTempNum}<span class="temp-unit">℃</span>`;
 
-    currentValueContainer.appendChild(thermometerIcon);
-    currentValueContainer.appendChild(currentValue);
+    currentTempWrapper.appendChild(tempIcon);
+    currentTempWrapper.appendChild(currentValue);
     currentTemp.appendChild(currentLabel);
-    currentTemp.appendChild(currentValueContainer);
+    currentTemp.appendChild(currentTempWrapper);
 
     // 目标温度（右侧，带内嵌控制按钮）
-    const targetTemp = document.createElement("div");
-    targetTemp.className = "temp-display target-temp";
+    const tempControls = document.createElement("div");
+    tempControls.className = "temp-controls";
 
     const targetLabel = document.createElement("div");
     targetLabel.className = "temp-label";
     targetLabel.textContent = "设定温度";
 
-    const targetControlContainer = document.createElement("div");
-    targetControlContainer.className = "target-temp-control-container";
+    const targetTempWrapper = document.createElement("div");
+    targetTempWrapper.className = "target-temp-wrapper";
 
     // 减温按钮
     const decreaseBtn = document.createElement("mwc-button");
-    decreaseBtn.className = "temp-mini-button";
+    decreaseBtn.className = "temp-btn";
     decreaseBtn.style.cursor = "pointer";
     decreaseBtn.addEventListener("click", () => {
       this._handleTempChange(-1);
@@ -454,7 +448,7 @@ class HeatingCard extends HTMLElement {
 
     // 增温按钮
     const increaseBtn = document.createElement("mwc-button");
-    increaseBtn.className = "temp-mini-button";
+    increaseBtn.className = "temp-btn";
     increaseBtn.style.cursor = "pointer";
     increaseBtn.addEventListener("click", () => {
       this._handleTempChange(1);
@@ -463,14 +457,14 @@ class HeatingCard extends HTMLElement {
     increaseIcon.setAttribute("icon", "mdi:plus");
     increaseBtn.appendChild(increaseIcon);
 
-    targetControlContainer.appendChild(decreaseBtn);
-    targetControlContainer.appendChild(targetValue);
-    targetControlContainer.appendChild(increaseBtn);
-    targetTemp.appendChild(targetLabel);
-    targetTemp.appendChild(targetControlContainer);
+    targetTempWrapper.appendChild(decreaseBtn);
+    targetTempWrapper.appendChild(targetValue);
+    targetTempWrapper.appendChild(increaseBtn);
+    tempControls.appendChild(targetLabel);
+    tempControls.appendChild(targetTempWrapper);
 
     section.appendChild(currentTemp);
-    section.appendChild(targetTemp);
+    section.appendChild(tempControls);
 
     return section;
   }
