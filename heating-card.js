@@ -200,7 +200,6 @@ class HeatingCard extends HTMLElement {
         font-size: 40px;
         font-weight: 300;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        line-height: 1;
       }
 
       .temp-value .temp-unit {
@@ -217,7 +216,6 @@ class HeatingCard extends HTMLElement {
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
         min-width: 60px;
         text-align: center;
-        line-height: 1;
       }
 
       .target-temp .temp-unit {
