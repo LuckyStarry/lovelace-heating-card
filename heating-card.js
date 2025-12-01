@@ -150,18 +150,24 @@ class HeatingCard extends HTMLElement {
 
       .temperature-section {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        padding: 16px 0;
-        gap: 40px;
+        padding: 12px 0;
       }
 
       .temp-display {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        min-width: 140px;
+        gap: 4px;
+      }
+
+      .temp-display.current-temp {
+        align-items: flex-start;
+      }
+
+      .temp-display.target-temp {
+        align-items: flex-end;
       }
 
       .temp-label {
@@ -393,7 +399,7 @@ class HeatingCard extends HTMLElement {
 
     // 当前温度（左侧）
     const currentTemp = document.createElement("div");
-    currentTemp.className = "temp-display";
+    currentTemp.className = "temp-display current-temp";
 
     const currentLabel = document.createElement("div");
     currentLabel.className = "temp-label";
@@ -420,7 +426,7 @@ class HeatingCard extends HTMLElement {
 
     // 目标温度（右侧，带内嵌控制按钮）
     const targetTemp = document.createElement("div");
-    targetTemp.className = "temp-display";
+    targetTemp.className = "temp-display target-temp";
 
     const targetLabel = document.createElement("div");
     targetLabel.className = "temp-label";
