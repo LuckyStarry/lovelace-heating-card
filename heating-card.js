@@ -111,87 +111,103 @@ class HeatingCard extends HTMLElement {
 
       ha-card {
         overflow: hidden;
-        border-radius: 16px;
+        border-radius: 20px;
         background: var(--ha-card-background, var(--card-background-color, #ffffff));
-        box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+        box-shadow: var(--ha-card-box-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+        transition: box-shadow 0.3s ease;
+      }
+
+      ha-card:hover {
+        box-shadow: var(--ha-card-box-shadow-hover, 0 6px 16px rgba(0, 0, 0, 0.12));
       }
 
       .card-content {
-        padding: 20px;
+        padding: 24px;
       }
 
       .error {
-        padding: 20px;
+        padding: 24px;
         color: var(--error-color, #f44336);
         text-align: center;
+        font-size: 14px;
       }
 
       .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
 
       .header-title {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 500;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
+        letter-spacing: 0.15px;
       }
 
       .power-switch {
         --mdc-theme-primary: var(--primary-color);
+        --mdc-switch-selected-handle-color: white;
+        --mdc-switch-selected-track-color: var(--primary-color);
       }
 
       .temperature-section {
         display: flex;
-        justify-content: space-around;
+        justify-content: center;
         align-items: center;
-        margin-bottom: 24px;
-        padding: 16px 0;
+        margin-bottom: 32px;
+        padding: 24px 0;
+        gap: 32px;
       }
 
       .temp-display {
         display: flex;
         flex-direction: column;
         align-items: center;
-        flex: 1;
+        min-width: 120px;
       }
 
       .temp-label {
-        font-size: 14px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
-        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
+        margin-bottom: 12px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
       }
 
       .temp-value {
-        font-size: 48px;
+        font-size: 56px;
         font-weight: 300;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
         line-height: 1;
+        letter-spacing: -2px;
       }
 
       .temp-unit {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 300;
-        margin-left: 4px;
+        margin-left: 2px;
+        opacity: 0.8;
       }
 
       .temp-divider {
         width: 1px;
-        height: 60px;
-        background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12)));
-        margin: 0 20px;
+        height: 80px;
+        background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.08)));
+        flex-shrink: 0;
       }
 
       .preset-section {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
 
       .preset-label {
-        font-size: 14px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
+        font-size: 13px;
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
         margin-bottom: 12px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
       }
 
       .preset-buttons {
@@ -204,29 +220,35 @@ class HeatingCard extends HTMLElement {
         flex: 1;
         min-width: 0;
         --mdc-theme-primary: var(--primary-color);
-        --mdc-theme-on-primary: var(--primary-text-color);
+        --mdc-theme-on-primary: white;
         cursor: pointer !important;
-        border-radius: 8px;
-        padding: 8px 12px;
+        border-radius: 12px;
+        padding: 10px 14px;
         font-size: 13px;
         text-transform: none;
         box-shadow: none;
-        border: 1px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12)));
+        border: 1.5px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.08)));
         background: var(--ha-card-background, var(--card-background-color, #ffffff));
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        transition: all 0.3s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 400;
       }
 
       .preset-button:hover {
         background: var(--ha-card-background, var(--card-background-color, #ffffff));
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
       }
 
       .preset-button.active {
         background: var(--primary-color);
-        color: var(--primary-text-color);
+        color: white;
         border-color: var(--primary-color);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(var(--rgb-primary-color, 33, 150, 243), 0.3);
       }
 
       .preset-button ha-icon {
@@ -234,61 +256,94 @@ class HeatingCard extends HTMLElement {
         --mdc-icon-size: 18px;
       }
 
+      .preset-button.active ha-icon {
+        color: white;
+      }
+
       .temp-control-section {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 16px;
-        margin-top: 16px;
+        gap: 24px;
+        margin-top: 24px;
+        padding: 0 16px;
       }
 
       .temp-control-button {
         --mdc-theme-primary: var(--primary-color);
-        --mdc-theme-on-primary: var(--primary-text-color);
+        --mdc-theme-on-primary: white;
         cursor: pointer !important;
         border-radius: 50%;
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
         padding: 0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+        background: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .temp-control-button:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+        transform: translateY(-2px);
       }
 
       .temp-control-button:active {
-        transform: scale(0.95);
+        transform: translateY(0) scale(0.96);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
       }
 
       .temp-control-button ha-icon {
-        --mdc-icon-size: 24px;
+        --mdc-icon-size: 28px;
+        color: white;
       }
 
       .target-temp-display {
-        font-size: 32px;
-        font-weight: 400;
+        font-size: 40px;
+        font-weight: 300;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        min-width: 80px;
+        min-width: 100px;
         text-align: center;
+        letter-spacing: -1px;
       }
 
       .heating-card.off .temp-value,
       .heating-card.off .target-temp-display {
-        opacity: 0.5;
+        opacity: 0.4;
       }
 
       .heating-card.off .preset-button {
-        opacity: 0.6;
+        opacity: 0.5;
         pointer-events: none;
+        filter: grayscale(0.5);
       }
 
       .heating-card.off .temp-control-button {
-        opacity: 0.6;
+        opacity: 0.4;
         pointer-events: none;
+        background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12)));
+      }
+
+      .heating-card.off .temp-control-button ha-icon {
+        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
+      }
+
+      .heating-card.off .temp-label {
+        opacity: 0.6;
+      }
+
+      /* 暗色主题适配 */
+      @media (prefers-color-scheme: dark) {
+        ha-card {
+          box-shadow: var(--ha-card-box-shadow, 0 4px 12px rgba(0, 0, 0, 0.3));
+        }
+
+        ha-card:hover {
+          box-shadow: var(--ha-card-box-shadow-hover, 0 6px 16px rgba(0, 0, 0, 0.4));
+        }
       }
     `;
     this.shadowRoot.appendChild(style);
