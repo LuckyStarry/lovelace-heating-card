@@ -152,8 +152,7 @@ class HeatingCard extends HTMLElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 0;
-        margin-bottom: 20px;
+        padding: 16px 0;
       }
 
       .current-temp {
