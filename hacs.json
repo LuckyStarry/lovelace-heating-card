@@ -1,5 +1,5 @@
 {
-  "name": "地暖控制器自定义卡片",
+  "name": "Heating Card",
   "render_readme": true,
   "filename": "heating-card.js",
   "domains": ["lovelace"],
