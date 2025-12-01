@@ -86,17 +86,13 @@ class HeatingCard extends HTMLElement {
     const header = this._createHeader();
     cardContent.appendChild(header);
 
-    // 温度显示区域
+    // 温度显示区域（包含内嵌的温度控制按钮）
     const temperatureSection = this._createTemperatureSection();
     cardContent.appendChild(temperatureSection);
 
     // 预设模式选择
     const presetSection = this._createPresetSection();
     cardContent.appendChild(presetSection);
-
-    // 温度控制按钮
-    const tempControlSection = this._createTempControlSection();
-    cardContent.appendChild(tempControlSection);
 
     haCard.appendChild(cardContent);
     this.shadowRoot.appendChild(haCard);
@@ -176,6 +172,18 @@ class HeatingCard extends HTMLElement {
         letter-spacing: 0.5px;
       }
 
+      .temp-value-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .thermometer-icon {
+        --mdc-icon-size: 32px;
+        color: var(--primary-color);
+        opacity: 0.8;
+      }
+
       .temp-value {
         font-size: 56px;
         font-weight: 300;
@@ -196,6 +204,44 @@ class HeatingCard extends HTMLElement {
         height: 80px;
         background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.08)));
         flex-shrink: 0;
+      }
+
+      .target-temp-control-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .temp-mini-button {
+        --mdc-theme-primary: var(--primary-color);
+        --mdc-theme-on-primary: white;
+        cursor: pointer !important;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        padding: 0;
+        background: var(--primary-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .temp-mini-button:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.14);
+        transform: scale(1.05);
+      }
+
+      .temp-mini-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .temp-mini-button ha-icon {
+        --mdc-icon-size: 20px;
+        color: white;
       }
 
       .preset-section {
@@ -260,58 +306,8 @@ class HeatingCard extends HTMLElement {
         color: white;
       }
 
-      .temp-control-section {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 24px;
-        margin-top: 24px;
-        padding: 0 16px;
-      }
-
-      .temp-control-button {
-        --mdc-theme-primary: var(--primary-color);
-        --mdc-theme-on-primary: white;
-        cursor: pointer !important;
-        border-radius: 50%;
-        width: 56px;
-        height: 56px;
-        min-width: 56px;
-        padding: 0;
-        background: var(--primary-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .temp-control-button:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
-        transform: translateY(-2px);
-      }
-
-      .temp-control-button:active {
-        transform: translateY(0) scale(0.96);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-      }
-
-      .temp-control-button ha-icon {
-        --mdc-icon-size: 28px;
-        color: white;
-      }
-
-      .target-temp-display {
-        font-size: 40px;
-        font-weight: 300;
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        min-width: 100px;
-        text-align: center;
-        letter-spacing: -1px;
-      }
-
       .heating-card.off .temp-value,
-      .heating-card.off .target-temp-display {
+      .heating-card.off .thermometer-icon {
         opacity: 0.4;
       }
 
@@ -321,13 +317,13 @@ class HeatingCard extends HTMLElement {
         filter: grayscale(0.5);
       }
 
-      .heating-card.off .temp-control-button {
+      .heating-card.off .temp-mini-button {
         opacity: 0.4;
         pointer-events: none;
         background: var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12)));
       }
 
-      .heating-card.off .temp-control-button ha-icon {
+      .heating-card.off .temp-mini-button ha-icon {
         color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
       }
 
@@ -374,13 +370,20 @@ class HeatingCard extends HTMLElement {
     const section = document.createElement("div");
     section.className = "temperature-section";
 
-    // 当前温度
+    // 当前温度（左侧）
     const currentTemp = document.createElement("div");
     currentTemp.className = "temp-display";
 
     const currentLabel = document.createElement("div");
     currentLabel.className = "temp-label";
     currentLabel.textContent = "当前温度";
+
+    const currentValueContainer = document.createElement("div");
+    currentValueContainer.className = "temp-value-container";
+
+    const thermometerIcon = document.createElement("ha-icon");
+    thermometerIcon.setAttribute("icon", "mdi:thermometer");
+    thermometerIcon.className = "thermometer-icon";
 
     const currentValue = document.createElement("div");
     currentValue.className = "temp-value";
@@ -389,28 +392,59 @@ class HeatingCard extends HTMLElement {
     );
     currentValue.innerHTML = `${currentTempNum}<span class="temp-unit">℃</span>`;
 
+    currentValueContainer.appendChild(thermometerIcon);
+    currentValueContainer.appendChild(currentValue);
     currentTemp.appendChild(currentLabel);
-    currentTemp.appendChild(currentValue);
+    currentTemp.appendChild(currentValueContainer);
 
     // 分隔线
     const divider = document.createElement("div");
     divider.className = "temp-divider";
 
-    // 目标温度
+    // 目标温度（右侧，带内嵌控制按钮）
     const targetTemp = document.createElement("div");
     targetTemp.className = "temp-display";
 
     const targetLabel = document.createElement("div");
     targetLabel.className = "temp-label";
-    targetLabel.textContent = "目标温度";
+    targetLabel.textContent = "设定温度";
 
+    const targetControlContainer = document.createElement("div");
+    targetControlContainer.className = "target-temp-control-container";
+
+    // 减温按钮
+    const decreaseBtn = document.createElement("mwc-button");
+    decreaseBtn.className = "temp-mini-button";
+    decreaseBtn.style.cursor = "pointer";
+    decreaseBtn.addEventListener("click", () => {
+      this._handleTempChange(-1);
+    });
+    const decreaseIcon = document.createElement("ha-icon");
+    decreaseIcon.setAttribute("icon", "mdi:minus");
+    decreaseBtn.appendChild(decreaseIcon);
+
+    // 目标温度显示
     const targetValue = document.createElement("div");
     targetValue.className = "temp-value";
     const targetTempNum = Math.round(this._entity?.attributes.temperature || 0);
     targetValue.innerHTML = `${targetTempNum}<span class="temp-unit">℃</span>`;
 
+    // 增温按钮
+    const increaseBtn = document.createElement("mwc-button");
+    increaseBtn.className = "temp-mini-button";
+    increaseBtn.style.cursor = "pointer";
+    increaseBtn.addEventListener("click", () => {
+      this._handleTempChange(1);
+    });
+    const increaseIcon = document.createElement("ha-icon");
+    increaseIcon.setAttribute("icon", "mdi:plus");
+    increaseBtn.appendChild(increaseIcon);
+
+    targetControlContainer.appendChild(decreaseBtn);
+    targetControlContainer.appendChild(targetValue);
+    targetControlContainer.appendChild(increaseBtn);
     targetTemp.appendChild(targetLabel);
-    targetTemp.appendChild(targetValue);
+    targetTemp.appendChild(targetControlContainer);
 
     section.appendChild(currentTemp);
     section.appendChild(divider);
@@ -462,47 +496,6 @@ class HeatingCard extends HTMLElement {
 
     section.appendChild(label);
     section.appendChild(buttonsContainer);
-
-    return section;
-  }
-
-  _createTempControlSection() {
-    const section = document.createElement("div");
-    section.className = "temp-control-section";
-
-    // 减温按钮
-    const decreaseBtn = document.createElement("mwc-button");
-    decreaseBtn.className = "temp-control-button";
-    decreaseBtn.style.cursor = "pointer";
-    decreaseBtn.addEventListener("click", () => {
-      this._handleTempChange(-1);
-    });
-
-    const decreaseIcon = document.createElement("ha-icon");
-    decreaseIcon.setAttribute("icon", "mdi:minus");
-    decreaseBtn.appendChild(decreaseIcon);
-
-    // 目标温度显示
-    const targetDisplay = document.createElement("div");
-    targetDisplay.className = "target-temp-display";
-    const targetTemp = Math.round(this._entity?.attributes.temperature || 0);
-    targetDisplay.textContent = `${targetTemp}℃`;
-
-    // 增温按钮
-    const increaseBtn = document.createElement("mwc-button");
-    increaseBtn.className = "temp-control-button";
-    increaseBtn.style.cursor = "pointer";
-    increaseBtn.addEventListener("click", () => {
-      this._handleTempChange(1);
-    });
-
-    const increaseIcon = document.createElement("ha-icon");
-    increaseIcon.setAttribute("icon", "mdi:plus");
-    increaseBtn.appendChild(increaseIcon);
-
-    section.appendChild(decreaseBtn);
-    section.appendChild(targetDisplay);
-    section.appendChild(increaseBtn);
 
     return section;
   }
