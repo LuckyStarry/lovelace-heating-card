@@ -176,36 +176,53 @@ class HeatingCard extends HTMLElement {
       .temp-value-container {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 12px;
       }
 
       .thermometer-icon {
         --mdc-icon-size: 40px;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
         opacity: 1;
-        margin-right: 4px;
+        width: 40px;
+        height: 40px;
       }
 
       .temp-value {
-        font-size: 48px;
+        font-size: 40px;
         font-weight: 300;
         color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
         line-height: 1;
-        letter-spacing: -1px;
       }
 
-      .temp-unit {
-        font-size: 24px;
+      .temp-value .temp-unit {
+        font-size: 20px;
         font-weight: 300;
-        margin-left: 0;
+        margin-left: 2px;
         opacity: 1;
-        vertical-align: top;
+        vertical-align: super;
+      }
+
+      .target-temp {
+        font-size: 32px;
+        font-weight: 300;
+        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
+        min-width: 60px;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .target-temp .temp-unit {
+        font-size: 16px;
+        font-weight: 300;
+        margin-left: 2px;
+        opacity: 1;
+        vertical-align: super;
       }
 
       .target-temp-control-container {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
       }
 
       .temp-mini-button {
@@ -417,7 +434,7 @@ class HeatingCard extends HTMLElement {
 
     // 目标温度显示
     const targetValue = document.createElement("div");
-    targetValue.className = "temp-value";
+    targetValue.className = "target-temp";
     const targetTempNum = Math.round(this._entity?.attributes.temperature || 0);
     targetValue.innerHTML = `${targetTempNum}<span class="temp-unit">℃</span>`;
 
