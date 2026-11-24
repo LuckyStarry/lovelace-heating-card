@@ -101,7 +101,7 @@ class HeatingCard extends HTMLElement {
     info.className = "header-info";
     const iconBox = document.createElement("div");
     iconBox.className = "header-icon" + (heating ? " heating" : "");
-    iconBox.innerHTML = '<ha-icon icon="mdi:radiator"></ha-icon>';
+    iconBox.innerHTML = '<ha-icon icon="mdi:heating-coil"></ha-icon>';
     const text = document.createElement("div");
     text.className = "header-text";
     const name = document.createElement("div");
@@ -175,11 +175,26 @@ class HeatingCard extends HTMLElement {
       :host { display: block; }
       .heating-card {
         padding: 14px 16px;
+        min-height: 270px;
+        box-sizing: border-box;
         border-radius: var(--ha-card-border-radius, 12px);
         background: var(--ha-card-background, var(--card-background-color, #fff));
         box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.08));
         color: var(--primary-text-color);
         --heat-accent: var(--primary-color);
+      }
+      :host { display: block; container-type: inline-size; }
+      @container (max-width: 320px) {
+        .temp-zone { gap: 12px; padding: 12px 0 8px; }
+        .step-btn {
+          width: 30px; height: 30px;
+          min-width: 30px; min-height: 30px;
+          max-width: 30px; max-height: 30px;
+        }
+        .step-btn ha-icon { --mdc-icon-size: 17px; }
+        .temp-value { font-size: 34px; }
+        .temp-value small { font-size: 17px; }
+        .temp-display { min-width: 84px; }
       }
       .heating-card.off { --heat-accent: var(--secondary-text-color); }
 
