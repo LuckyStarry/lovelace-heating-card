@@ -1,3 +1,9 @@
+/**
+ * 地暖控制卡片 v2 — 重新设计
+ * 设计原则：跟随 HA 主题变量、信息层级清晰、250~520px 响应式
+ * 功能：预设模式（离家/在家/睡眠/节能/手动）/ 温度±1 / 电源开关（全保留）
+ * 使用方式: type: custom:heating-card
+ */
 class HeatingCard extends HTMLElement {
   constructor() {
     super();
@@ -13,19 +19,12 @@ class HeatingCard extends HTMLElement {
   }
 
   static getStubConfig(hass, entities) {
-    const climateEntities = entities.filter(
-      (e) => e.startsWith("climate.") || e.startsWith("sensor.")
-    );
-    return {
-      entity: climateEntities[0] || "",
-      name: "地暖",
-    };
+    const climateEntities = entities.filter((e) => e.startsWith("climate."));
+    return { entity: climateEntities[0] || "", name: "地暖" };
   }
 
   setConfig(config) {
-    if (!config.entity) {
-      throw new Error("请指定实体 (entity)");
-    }
+    if (!config.entity) throw new Error("请指定实体 (entity)");
     this._config = config;
     if (this._initialRender) {
       this._updateEntities();
@@ -41,9 +40,7 @@ class HeatingCard extends HTMLElement {
     }
   }
 
-  get hass() {
-    return this._hass;
-  }
+  get hass() { return this._hass; }
 
   connectedCallback() {
     this._initialRender = true;
@@ -58,459 +55,214 @@ class HeatingCard extends HTMLElement {
     this._entity = this._hass.states[this._config.entity];
   }
 
+  getCardSize() { return 4; }
+
   _render() {
     if (!this.shadowRoot) return;
-
     this.shadowRoot.innerHTML = "";
-
-    // 创建样式
     this._createStyles();
 
-    // 创建卡片容器
     const haCard = document.createElement("ha-card");
     haCard.className = this._getCardClass();
 
     if (!this._entity) {
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "error";
-      errorDiv.textContent = `实体未找到: ${this._config?.entity || "未知"}`;
-      haCard.appendChild(errorDiv);
+      const err = document.createElement("div");
+      err.className = "error";
+      err.textContent = `实体未找到: ${this._config?.entity || "未知"}`;
+      haCard.appendChild(err);
       this.shadowRoot.appendChild(haCard);
       return;
     }
 
-    const cardContent = document.createElement("div");
-    cardContent.className = "card-content";
+    const attrs = this._entity.attributes;
+    const isOff = this._entity.state === "off";
+    const currentTemp = attrs.current_temperature;
+    const targetTemp = attrs.temperature;
+    const preset = attrs.preset_mode || "";
+    const hvacAction = attrs.hvac_action;
+    const heating = hvacAction === "heating" || hvacAction === "heat";
 
-    // 标题栏
-    const header = this._createHeader();
-    cardContent.appendChild(header);
+    // 状态副行
+    let subtitle;
+    if (isOff) {
+      subtitle = `已关机${currentTemp != null ? " · 当前 " + Math.round(currentTemp) + "℃" : ""}`;
+    } else {
+      const actionTxt = heating ? "🔥 加热中" : currentTemp != null && targetTemp != null && currentTemp >= targetTemp ? "✓ 已达标" : "待机";
+      subtitle = `<span class="mode-txt">${preset || "—"}</span><span class="dot">·</span>当前 ${currentTemp != null ? Math.round(currentTemp) : "—"}℃<span class="dot">·</span>${actionTxt}`;
+    }
 
-    // 温度显示区域（包含内嵌的温度控制按钮）
-    const temperatureSection = this._createTemperatureSection();
-    cardContent.appendChild(temperatureSection);
+    const content = document.createElement("div");
+    content.className = "card-content";
 
-    // 预设模式选择
-    const presetSection = this._createPresetSection();
-    cardContent.appendChild(presetSection);
+    // ── header：图标 + 名称/状态行 + 开关
+    const header = document.createElement("div");
+    header.className = "header";
+    const info = document.createElement("div");
+    info.className = "header-info";
+    const iconBox = document.createElement("div");
+    iconBox.className = "header-icon" + (heating ? " heating" : "");
+    iconBox.innerHTML = '<ha-icon icon="mdi:radiator"></ha-icon>';
+    const text = document.createElement("div");
+    text.className = "header-text";
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = this._config.name || "地暖";
+    const sub = document.createElement("div");
+    sub.className = "subtitle";
+    sub.innerHTML = subtitle;
+    text.appendChild(name);
+    text.appendChild(sub);
+    info.appendChild(iconBox);
+    info.appendChild(text);
 
-    haCard.appendChild(cardContent);
+    const toggle = document.createElement("ha-switch");
+    toggle.checked = !isOff;
+    toggle.addEventListener("change", (e) => this._handlePowerToggle(e.target.checked));
+
+    header.appendChild(info);
+    header.appendChild(toggle);
+
+    // ── 设定温度居中区（±1，跟随实体 step/min/max）
+    const zone = document.createElement("div");
+    zone.className = "temp-zone";
+    const minus = document.createElement("button");
+    minus.className = "step-btn";
+    minus.disabled = isOff;
+    minus.innerHTML = '<ha-icon icon="mdi:minus"></ha-icon>';
+    minus.addEventListener("click", () => this._handleTempChange(-1));
+    const disp = document.createElement("div");
+    disp.className = "temp-display";
+    const val = document.createElement("div");
+    val.className = "temp-value" + (heating ? " heating-txt" : "");
+    val.innerHTML = isOff || targetTemp == null ? `<small>—</small>` : `${Math.round(targetTemp)}<small>℃</small>`;
+    const lab = document.createElement("div");
+    lab.className = "temp-label";
+    lab.textContent = heating ? "设定温度 · 加热中" : "设定温度";
+    disp.appendChild(val);
+    disp.appendChild(lab);
+    const plus = document.createElement("button");
+    plus.className = "step-btn";
+    plus.disabled = isOff;
+    plus.innerHTML = '<ha-icon icon="mdi:plus"></ha-icon>';
+    plus.addEventListener("click", () => this._handleTempChange(1));
+    zone.appendChild(minus);
+    zone.appendChild(disp);
+    zone.appendChild(plus);
+
+    // ── 预设模式 pills（实体 preset_modes 动态）
+    const presetRow = document.createElement("div");
+    presetRow.className = "chips-row";
+    const presetModes = attrs.preset_modes || ["离家", "在家", "睡眠", "节能", "手动"];
+    presetModes.forEach((p) => {
+      const b = document.createElement("button");
+      b.className = `mode-pill ${preset === p && !isOff ? "active" : ""}`;
+      b.disabled = isOff;
+      b.innerHTML = `<ha-icon icon="${this._getPresetIcon(p)}"></ha-icon><span>${p}</span>`;
+      b.addEventListener("click", () => this._handlePresetChange(p));
+      presetRow.appendChild(b);
+    });
+
+    content.appendChild(header);
+    content.appendChild(zone);
+    content.appendChild(presetRow);
+    haCard.appendChild(content);
     this.shadowRoot.appendChild(haCard);
   }
 
   _createStyles() {
     const style = document.createElement("style");
     style.textContent = `
-      :host {
-        display: block;
+      :host { display: block; }
+      .heating-card {
+        padding: 14px 16px;
+        border-radius: var(--ha-card-border-radius, 12px);
+        background: var(--ha-card-background, var(--card-background-color, #fff));
+        box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,.08));
+        color: var(--primary-text-color);
+        --heat-accent: var(--primary-color);
       }
+      .heating-card.off { --heat-accent: var(--secondary-text-color); }
 
-      ha-card {
-        overflow: hidden;
-        border-radius: 20px;
-        background: var(--ha-card-background, var(--card-background-color, #ffffff));
-        box-shadow: var(--ha-card-box-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
-        transition: box-shadow 0.3s ease;
+      .header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .header-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .header-icon {
+        width: 36px; height: 36px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: color-mix(in srgb, var(--heat-accent) 14%, transparent);
+        color: var(--heat-accent); flex: none;
       }
-
-      ha-card:hover {
-        box-shadow: var(--ha-card-box-shadow-hover, 0 6px 16px rgba(0, 0, 0, 0.12));
+      .header-icon ha-icon { --mdc-icon-size: 22px; }
+      .header-icon.heating {
+        background: color-mix(in srgb, #FF6B35 18%, transparent);
+        color: #FF6B35;
+        animation: heat-pulse 2.2s ease-in-out infinite;
       }
-
-      .card-content {
-        padding: 24px;
+      @keyframes heat-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,.25); }
+        50% { box-shadow: 0 0 0 8px rgba(255,107,53,0); }
       }
-
-      .error {
-        padding: 24px;
-        color: var(--error-color, #f44336);
-        text-align: center;
-        font-size: 14px;
+      .header-text { display: flex; flex-direction: column; min-width: 0; }
+      .name { font-size: 15px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .subtitle {
+        font-size: 12px; line-height: 1.4; margin-top: 1px;
+        color: var(--secondary-text-color);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
+      .subtitle .dot { margin: 0 3px; opacity: .6; }
+      .subtitle .mode-txt { color: var(--heat-accent); font-weight: 500; }
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
+      .temp-zone {
+        display: flex; align-items: center; justify-content: center;
+        gap: 18px; padding: 14px 0 10px;
       }
-
-      .header-title {
-        font-size: 20px;
-        font-weight: 500;
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        letter-spacing: 0.15px;
+      .step-btn {
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 1px solid var(--divider-color, rgba(0,0,0,.12));
+        background: transparent; color: var(--primary-text-color);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all .18s ease; padding: 0;
       }
-
-      .power-switch {
-        --mdc-theme-primary: var(--primary-color);
-        --mdc-switch-selected-handle-color: white;
-        --mdc-switch-selected-track-color: var(--primary-color);
+      .step-btn ha-icon { --mdc-icon-size: 20px; pointer-events: none; }
+      .step-btn:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--heat-accent) 14%, transparent);
+        border-color: var(--heat-accent); color: var(--heat-accent);
       }
-
-      .temperature-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 0;
-      }
-
-      .current-temp {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-      }
-
-      .current-temp-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .temp-controls {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 4px;
-      }
-
-      .target-temp-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .temp-label {
-        font-size: 12px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
-        font-weight: 400;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        line-height: 1;
-      }
-
-      .temp-icon {
-        width: 40px;
-        height: 40px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.6)));
-      }
-
+      .step-btn:disabled { opacity: .35; cursor: not-allowed; }
+      .temp-display { display: flex; flex-direction: column; align-items: center; min-width: 110px; }
       .temp-value {
-        font-size: 40px;
-        font-weight: 300;
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
+        font-size: 42px; font-weight: 300; line-height: 1.05;
+        font-variant-numeric: tabular-nums; color: var(--primary-text-color);
+      }
+      .temp-value small { font-size: 20px; font-weight: 400; }
+      .temp-value.heating-txt { color: #FF6B35; }
+      .temp-label {
+        font-size: 11px; color: var(--secondary-text-color);
+        letter-spacing: 1px; margin-top: 2px;
       }
 
-      .temp-value .temp-unit {
-        font-size: 20px;
-        font-weight: 300;
-        margin-left: 2px;
-        opacity: 1;
-        vertical-align: super;
+      .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+      .mode-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 5px 12px; border-radius: 17px;
+        border: 1px solid var(--divider-color, rgba(0,0,0,.12));
+        background: transparent; color: var(--secondary-text-color);
+        font-size: 13px; cursor: pointer; transition: all .18s ease;
       }
-
-      .target-temp {
-        font-size: 32px;
-        font-weight: 300;
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        min-width: 60px;
-        text-align: center;
+      .mode-pill ha-icon { --mdc-icon-size: 16px; pointer-events: none; }
+      .mode-pill:hover:not(:disabled):not(.active) {
+        background: color-mix(in srgb, var(--primary-text-color) 7%, transparent);
+        color: var(--primary-text-color);
       }
-
-      .target-temp .temp-unit {
-        font-size: 16px;
-        font-weight: 300;
-        margin-left: 2px;
-        opacity: 1;
-        vertical-align: super;
-      }
-
-      .temp-btn {
-        min-width: 40px;
-        min-height: 40px;
-        --mdc-theme-primary: var(--primary-color, rgba(0, 0, 0, 0.6));
-        background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.9))) !important;
-        border: 1px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.12))) !important;
-        border-radius: 8px;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-        cursor: pointer !important;
-      }
-
-      .temp-btn:hover:not(:disabled) {
-        background-color: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 1))) !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transform: translateY(-1px);
-      }
-
-      .temp-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-
-      .temp-btn ha-icon {
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.7))) !important;
-        width: 24px;
-        height: 24px;
-        margin: 0;
-      }
-
-      .temp-btn:hover:not(:disabled) ha-icon {
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87))) !important;
-      }
-
-      .preset-section {
-        margin-bottom: 24px;
-      }
-
-      .preset-label {
-        font-size: 13px;
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
-        margin-bottom: 12px;
-        font-weight: 400;
-        letter-spacing: 0.5px;
-      }
-
-      .preset-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-
-      .preset-button {
-        flex: 1;
-        min-width: 0;
-        --mdc-theme-primary: var(--primary-color);
-        --mdc-theme-on-primary: white;
-        cursor: pointer !important;
-        border-radius: 12px;
-        padding: 10px 14px;
-        font-size: 13px;
-        text-transform: none;
-        box-shadow: none;
-        border: 1.5px solid var(--ha-divider-color, var(--divider-color, rgba(0, 0, 0, 0.08)));
-        background: var(--ha-card-background, var(--card-background-color, #ffffff));
-        color: var(--ha-text-primary-color, var(--primary-text-color, rgba(0, 0, 0, 0.87)));
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 400;
-      }
-
-      .preset-button:hover {
-        background: var(--ha-card-background, var(--card-background-color, #ffffff));
-        border-color: var(--primary-color);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        transform: translateY(-1px);
-      }
-
-      .preset-button.active {
+      .mode-pill.active {
         background: var(--primary-color);
-        color: white;
         border-color: var(--primary-color);
-        box-shadow: 0 2px 8px rgba(var(--rgb-primary-color, 33, 150, 243), 0.3);
+        color: #fff; font-weight: 500;
       }
+      .mode-pill:disabled { opacity: .38; cursor: not-allowed; }
 
-      .preset-button ha-icon {
-        margin-right: 6px;
-        --mdc-icon-size: 18px;
-      }
-
-      .preset-button.active ha-icon {
-        color: white;
-      }
-
-      .heating-card.off .temp-value,
-      .heating-card.off .temp-icon {
-        opacity: 0.4;
-      }
-
-      .heating-card.off .preset-button {
-        opacity: 0.5;
-        pointer-events: none;
-        filter: grayscale(0.5);
-      }
-
-      .heating-card.off .temp-btn {
-        opacity: 0.4;
-        pointer-events: none;
-      }
-
-      .heating-card.off .temp-btn ha-icon {
-        color: var(--ha-text-secondary-color, var(--secondary-text-color, rgba(0, 0, 0, 0.54)));
-      }
-
-      .heating-card.off .temp-label {
-        opacity: 0.6;
-      }
-
-      /* 暗色主题适配 */
-      @media (prefers-color-scheme: dark) {
-        ha-card {
-          box-shadow: var(--ha-card-box-shadow, 0 4px 12px rgba(0, 0, 0, 0.3));
-        }
-
-        ha-card:hover {
-          box-shadow: var(--ha-card-box-shadow-hover, 0 6px 16px rgba(0, 0, 0, 0.4));
-        }
-      }
+      .error { padding: 24px; color: var(--error-color); text-align: center; font-size: 14px; }
     `;
     this.shadowRoot.appendChild(style);
-  }
-
-  _createHeader() {
-    const header = document.createElement("div");
-    header.className = "header";
-
-    const title = document.createElement("div");
-    title.className = "header-title";
-    title.textContent = this._config.name || "地暖";
-
-    const powerSwitch = document.createElement("ha-switch");
-    powerSwitch.className = "power-switch";
-    powerSwitch.checked = this._entity?.state !== "off";
-    powerSwitch.addEventListener("change", (e) => {
-      this._handlePowerToggle(e.target.checked);
-    });
-
-    header.appendChild(title);
-    header.appendChild(powerSwitch);
-
-    return header;
-  }
-
-  _createTemperatureSection() {
-    const section = document.createElement("div");
-    section.className = "temperature-section";
-
-    // 当前温度（左侧）
-    const currentTemp = document.createElement("div");
-    currentTemp.className = "current-temp";
-
-    const currentLabel = document.createElement("div");
-    currentLabel.className = "temp-label";
-    currentLabel.textContent = "当前温度";
-
-    const currentTempWrapper = document.createElement("div");
-    currentTempWrapper.className = "current-temp-wrapper";
-
-    const tempIcon = document.createElement("ha-icon");
-    tempIcon.setAttribute("icon", "mdi:thermometer");
-    tempIcon.className = "temp-icon";
-
-    const currentValue = document.createElement("span");
-    currentValue.className = "temp-value";
-    const currentTempNum = Math.round(
-      this._entity?.attributes.current_temperature || 0
-    );
-    currentValue.innerHTML = `${currentTempNum}<span class="temp-unit">℃</span>`;
-
-    currentTempWrapper.appendChild(tempIcon);
-    currentTempWrapper.appendChild(currentValue);
-    currentTemp.appendChild(currentLabel);
-    currentTemp.appendChild(currentTempWrapper);
-
-    // 目标温度（右侧，带内嵌控制按钮）
-    const tempControls = document.createElement("div");
-    tempControls.className = "temp-controls";
-
-    const targetLabel = document.createElement("div");
-    targetLabel.className = "temp-label";
-    targetLabel.textContent = "设定温度";
-
-    const targetTempWrapper = document.createElement("div");
-    targetTempWrapper.className = "target-temp-wrapper";
-
-    // 减温按钮
-    const decreaseBtn = document.createElement("mwc-button");
-    decreaseBtn.className = "temp-btn";
-    decreaseBtn.style.cursor = "pointer";
-    decreaseBtn.addEventListener("click", () => {
-      this._handleTempChange(-1);
-    });
-    const decreaseIcon = document.createElement("ha-icon");
-    decreaseIcon.setAttribute("icon", "mdi:minus");
-    decreaseBtn.appendChild(decreaseIcon);
-
-    // 目标温度显示
-    const targetValue = document.createElement("div");
-    targetValue.className = "target-temp";
-    const targetTempNum = Math.round(this._entity?.attributes.temperature || 0);
-    targetValue.innerHTML = `${targetTempNum}<span class="temp-unit">℃</span>`;
-
-    // 增温按钮
-    const increaseBtn = document.createElement("mwc-button");
-    increaseBtn.className = "temp-btn";
-    increaseBtn.style.cursor = "pointer";
-    increaseBtn.addEventListener("click", () => {
-      this._handleTempChange(1);
-    });
-    const increaseIcon = document.createElement("ha-icon");
-    increaseIcon.setAttribute("icon", "mdi:plus");
-    increaseBtn.appendChild(increaseIcon);
-
-    targetTempWrapper.appendChild(decreaseBtn);
-    targetTempWrapper.appendChild(targetValue);
-    targetTempWrapper.appendChild(increaseBtn);
-    tempControls.appendChild(targetLabel);
-    tempControls.appendChild(targetTempWrapper);
-
-    section.appendChild(currentTemp);
-    section.appendChild(tempControls);
-
-    return section;
-  }
-
-  _createPresetSection() {
-    const section = document.createElement("div");
-    section.className = "preset-section";
-
-    const label = document.createElement("div");
-    label.className = "preset-label";
-    label.textContent = "预设模式";
-
-    const buttonsContainer = document.createElement("div");
-    buttonsContainer.className = "preset-buttons";
-
-    const presetModes = this._entity?.attributes.preset_modes || [
-      "离家",
-      "在家",
-      "睡眠",
-      "节能",
-      "手动",
-    ];
-    const currentPreset = this._entity?.attributes.preset_mode || "";
-
-    presetModes.forEach((preset) => {
-      const button = document.createElement("mwc-button");
-      button.className = `preset-button ${
-        currentPreset === preset ? "active" : ""
-      }`;
-      button.style.cursor = "pointer";
-      button.addEventListener("click", () => {
-        this._handlePresetChange(preset);
-      });
-
-      const icon = document.createElement("ha-icon");
-      icon.setAttribute("icon", this._getPresetIcon(preset));
-      button.appendChild(icon);
-
-      const text = document.createElement("span");
-      text.textContent = preset;
-      button.appendChild(text);
-
-      buttonsContainer.appendChild(button);
-    });
-
-    section.appendChild(label);
-    section.appendChild(buttonsContainer);
-
-    return section;
   }
 
   _getCardClass() {
@@ -530,19 +282,10 @@ class HeatingCard extends HTMLElement {
   }
 
   _handlePowerToggle(checked) {
-    if (checked) {
-      // 开启地暖
-      this._callService("climate", "set_hvac_mode", {
-        entity_id: this._config.entity,
-        hvac_mode: "auto",
-      });
-    } else {
-      // 关闭地暖
-      this._callService("climate", "set_hvac_mode", {
-        entity_id: this._config.entity,
-        hvac_mode: "off",
-      });
-    }
+    this._callService("climate", "set_hvac_mode", {
+      entity_id: this._config.entity,
+      hvac_mode: checked ? "auto" : "off",
+    });
   }
 
   _handlePresetChange(preset) {
@@ -557,10 +300,7 @@ class HeatingCard extends HTMLElement {
     const minTemp = this._entity?.attributes.min_temp || 5;
     const maxTemp = this._entity?.attributes.max_temp || 35;
     const step = this._entity?.attributes.target_temp_step || 1;
-
-    let newTemp = currentTemp + delta * step;
-    newTemp = Math.max(minTemp, Math.min(maxTemp, newTemp));
-
+    let newTemp = Math.max(minTemp, Math.min(maxTemp, currentTemp + delta * step));
     this._callService("climate", "set_temperature", {
       entity_id: this._config.entity,
       temperature: newTemp,
@@ -571,10 +311,6 @@ class HeatingCard extends HTMLElement {
     if (this._hass && this._hass.callService) {
       this._hass.callService(domain, service, serviceData);
     }
-  }
-
-  getCardSize() {
-    return 4;
   }
 }
 
@@ -587,67 +323,36 @@ class HeatingCardEditor extends HTMLElement {
   }
 
   async connectedCallback() {
-    // 确保 Home Assistant 组件已加载
     try {
       if (window.loadCardHelpers) {
         const helpers = await window.loadCardHelpers();
-        if (helpers && helpers.loadHaComponents) {
-          await helpers.loadHaComponents();
-        }
+        if (helpers && helpers.loadHaComponents) await helpers.loadHaComponents();
       }
-    } catch (e) {
-      // 继续执行，不阻塞渲染
-    }
-
-    if (this._config && this._hass) {
-      this._render();
-    }
+    } catch (e) { /* continue */ }
+    if (this._config && this._hass) this._render();
   }
 
   setConfig(config) {
     this._config = config || {};
-    if (this.isConnected && !this._hasRendered) {
-      this._render();
-    } else if (this._hasRendered) {
-      this._updateValues();
-    }
+    if (this.isConnected && !this._hasRendered) this._render();
+    else if (this._hasRendered) this._updateValues();
   }
 
   set hass(hass) {
     this._hass = hass;
-    if (this.isConnected && this._hasRendered) {
-      this._updateValues();
-    } else if (this.isConnected && this._config) {
-      this._render();
-    }
+    if (this.isConnected && this._hasRendered) this._updateValues();
+    else if (this.isConnected && this._config) this._render();
   }
 
-  get hass() {
-    return this._hass;
-  }
+  get hass() { return this._hass; }
 
   async _render() {
     this.innerHTML = "";
-
     const entityForm = document.createElement("ha-form");
     const schema = [
-      {
-        name: "entity",
-        required: true,
-        selector: {
-          entity: {
-            domain: ["climate"],
-          },
-        },
-      },
-      {
-        name: "name",
-        selector: {
-          text: {},
-        },
-      },
+      { name: "entity", required: true, selector: { entity: { domain: ["climate"] } } },
+      { name: "name", selector: { text: {} } },
     ];
-
     entityForm.hass = this._hass;
     entityForm.data = {
       entity: (this._config && this._config.entity) || "",
@@ -655,22 +360,16 @@ class HeatingCardEditor extends HTMLElement {
     };
     entityForm.schema = schema;
     entityForm.computeLabel = (schema) => {
-      if (schema.name === "entity") {
-        return "实体 *";
-      }
-      if (schema.name === "name") {
-        return "名称";
-      }
+      if (schema.name === "entity") return "实体 *";
+      if (schema.name === "name") return "名称";
       return schema.name;
     };
-
     entityForm.addEventListener("value-changed", (ev) => {
       if (ev.detail.value) {
         this._config = { ...this._config, ...ev.detail.value };
         this._fireConfigChanged();
       }
     });
-
     this.appendChild(entityForm);
     this._hasRendered = true;
   }
@@ -686,29 +385,19 @@ class HeatingCardEditor extends HTMLElement {
   }
 
   _fireConfigChanged() {
-    const event = new CustomEvent("config-changed", {
-      detail: { config: this._config },
-      bubbles: true,
-      composed: true,
-    });
-    this.dispatchEvent(event);
+    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
   }
 }
 
-// 先注册配置编辑器
 if (!customElements.get("heating-card-editor")) {
   customElements.define("heating-card-editor", HeatingCardEditor);
 }
-
-// 注册主卡片
 if (!customElements.get("heating-card")) {
   customElements.define("heating-card", HeatingCard);
-
-  // 注册到 window.customCards（有助于 HACS 识别）
   window.customCards = window.customCards || [];
   window.customCards.push({
     type: "heating-card",
     name: "Heating Card",
-    description: "地暖控制器自定义卡片",
+    description: "地暖控制器自定义卡片 v2",
   });
 }
