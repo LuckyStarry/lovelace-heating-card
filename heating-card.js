@@ -216,11 +216,16 @@ class HeatingCard extends HTMLElement {
         gap: 18px; padding: 14px 0 10px;
       }
       .step-btn {
-        width: 36px; height: 36px; border-radius: 50%;
+        width: 36px; height: 36px;
+        min-width: 36px; min-height: 36px;
+        max-width: 36px; max-height: 36px;
+        box-sizing: border-box;
+        aspect-ratio: 1;
+        border-radius: 9999px;
         border: 1px solid var(--divider-color, rgba(0,0,0,.12));
         background: transparent; color: var(--primary-text-color);
         display: flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: all .18s ease; padding: 0;
+        cursor: pointer; transition: all .18s ease; padding: 0; line-height: 1;
       }
       .step-btn ha-icon { --mdc-icon-size: 20px; pointer-events: none; }
       .step-btn:hover:not(:disabled) {
