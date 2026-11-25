@@ -247,16 +247,17 @@ class HeatingCard extends HTMLElement {
         border-color: var(--heat-accent); color: var(--heat-accent);
       }
       .step-btn:disabled { opacity: .35; cursor: not-allowed; }
-      .temp-display { display: flex; flex-direction: column; align-items: center; min-width: 110px; }
+      .temp-display { display: flex; flex-direction: column; align-items: center; min-width: 96px; }
       .temp-value {
         font-size: 42px; font-weight: 300; line-height: 1.05;
         font-variant-numeric: tabular-nums; color: var(--primary-text-color);
+        transition: opacity .2s ease;
       }
       .temp-value small { font-size: 20px; font-weight: 400; }
       .temp-value.heating-txt { color: #FF6B35; }
       .temp-label {
         font-size: 11px; color: var(--secondary-text-color);
-        letter-spacing: 1px; margin-top: 2px;
+        letter-spacing: 2px; margin-top: 2px;
       }
 
       .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
@@ -279,7 +280,7 @@ class HeatingCard extends HTMLElement {
       }
       .mode-pill:disabled { opacity: .38; cursor: not-allowed; }
 
-      .error { padding: 24px; color: var(--error-color); text-align: center; font-size: 14px; }
+      .error { padding: 16px; color: var(--error-color); }
     `;
     this.shadowRoot.appendChild(style);
   }
