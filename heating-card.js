@@ -174,7 +174,9 @@ class HeatingCard extends HTMLElement {
     style.textContent = `
       :host { display: block; }
       .heating-card {
+        display: block;
         padding: 14px 16px;
+        min-height: 268px; box-sizing: border-box;
         box-sizing: border-box;
         border-radius: var(--ha-card-border-radius, 12px);
         background: var(--ha-card-background, var(--card-background-color, #fff));
