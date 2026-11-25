@@ -264,7 +264,8 @@ class HeatingCard extends HTMLElement {
 
       .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
       .mode-pill {
-        display: inline-flex; align-items: center; gap: 5px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+        flex: 1 1 calc(50% - 4px);
         padding: 5px 12px; border-radius: 17px;
         border: 1px solid var(--divider-color, rgba(0,0,0,.12));
         background: transparent; color: var(--secondary-text-color);
