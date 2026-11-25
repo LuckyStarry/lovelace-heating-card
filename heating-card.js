@@ -92,7 +92,7 @@ class HeatingCard extends HTMLElement {
     }
 
     const content = document.createElement("div");
-    content.className = "card-content";
+    content.className = "ht-content";
 
     // ── header：图标 + 名称/状态行 + 开关
     const header = document.createElement("div");
@@ -417,6 +417,7 @@ if (!customElements.get("heating-card-editor")) {
 }
 if (!customElements.get("heating-card")) {
   customElements.define("heating-card", HeatingCard);
+  window.HeatingCard = HeatingCard;
   window.customCards = window.customCards || [];
   window.customCards.push({
     type: "heating-card",
